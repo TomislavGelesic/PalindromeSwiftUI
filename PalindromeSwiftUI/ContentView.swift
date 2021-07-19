@@ -13,23 +13,44 @@ struct ContentView: View {
     @State private var showsResult: Bool = false
     @State private var result: Bool = false
     
+    init() {
+        let coloredNavAppearance = UINavigationBarAppearance()
+        
+        coloredNavAppearance.configureWithOpaqueBackground()
+        coloredNavAppearance.backgroundColor = .systemBlue
+        coloredNavAppearance.titleTextAttributes = [.foregroundColor: UIColor.white]
+        coloredNavAppearance.largeTitleTextAttributes = [.foregroundColor: UIColor.white]
+        
+        UINavigationBar.appearance().standardAppearance = coloredNavAppearance
+        UINavigationBar.appearance().scrollEdgeAppearance = coloredNavAppearance
+    }
     var body: some View {
         ZStack {
             NavigationView() {
                 VStack {
+                    
                     Spacer()
+                    
                     TextField("Type text here..", text: $word)
                         .padding()
                         .border(Color.blue, width: 1)
+                    
                     Spacer()
-                    PalindromeButton(title: "Check", action: {
-                        if word.elementsEqual(word.reversed()) && !word.isEmpty {
-                            result = true
-                        } else {
-                            result = false
-                        }
-                        showsResult.toggle()
-                    })
+                    
+                    PalindromeButton(title: "Check",
+                                     action: {
+                                        let wordToCheck: String? = word.isEmpty ? nil : word.lowercased()
+                                        if let _ = wordToCheck {
+                                            result = true
+                                        } else {
+                                            result = false
+                                        }
+                                        showsResult.toggle()
+                                        word.removeAll()
+                                     },
+                                     backgroundColor: Color(.systemBlue))
+                        .disabled(showsResult)
+                    
                     Spacer()
                     Spacer()
                 }
@@ -38,6 +59,8 @@ struct ContentView: View {
                 .navigationBarTitleDisplayMode(.inline)
             }
             .blur(radius: showsResult ? 10 : 0)
+            .opacity(showsResult ? 0.5 : 1)
+            
             if showsResult {
                 VStack {
                     ResultsView(result: result, visible: $showsResult)
@@ -56,16 +79,17 @@ struct ContentView_Previews: PreviewProvider {
 struct PalindromeButton: View {
     var title: String
     var action: ()->()
+    var backgroundColor: Color
     
     var body: some View {
         Button(action: {
             action()
         }, label: {
             Text("\(title)")
-                .foregroundColor(.blue)
+                .foregroundColor(.white)
         })
         .frame(width: 280, height: 50, alignment: .center)
-        .background(Color(red: 135/255, green: 200/255, blue: 250/255))
+        .background(backgroundColor)
         .cornerRadius(10)
     }
 }
@@ -79,14 +103,19 @@ struct ResultsView: View {
         VStack {
             Spacer()
             Text("\(result ? "Congratulations!" : "Ooops!")")
-                .foregroundColor(result ? .green : .orange)
+                .multilineTextAlignment(.center)
+                .foregroundColor(result ? Color(.systemGreen) : Color(.systemRed))
+                .font(.title)
+                
+            Text("\(result ? "This text is indeed a palindrome." : "It seems this text isn't a palindrome.")")
+                .multilineTextAlignment(.center)
+                .foregroundColor(result ? Color(.systemGreen) : Color(.systemRed))
             Spacer()
-            Text("\(result ? "This text is indeed a palindrome." : "It seems this text isn't a palindrome.\n Try another!")")
-                .foregroundColor(result ? .green : .orange)
-            Spacer()
-            PalindromeButton(title: "OK", action: {
-                visible.toggle()
-            })
+            PalindromeButton(title: result ? "OK" : "Try again",
+                             action: {
+                                visible.toggle()
+                             },
+                             backgroundColor: result ? Color(.systemGreen) : Color(.systemRed))
             Spacer()
         }
         .padding()
